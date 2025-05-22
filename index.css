@@ -429,5 +429,50 @@ body {
 }
 
 .topic-row {
-    margin-bottom: 0.5em;
+    margin-bottom: 1em;
+}
+
+/* 分頁控制項樣式 */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5em;
+    margin: 2em 0 4em;
+    padding: 0 1em;
+}
+
+.page-btn {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: var(--radius-md);
+    padding: 0.6em 1.2em;
+    font-size: 1em;
+    color: #1e293b;
+    cursor: pointer;
+    transition: var(--transition);
+    box-shadow: var(--shadow-sm);
+}
+
+.page-btn:hover:not(:disabled) {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.page-btn.active {
+    background: var(--primary-gradient);
+    color: #fff;
+    border: none;
+}
+
+.page-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: #f1f5f9;
+}
+
+@media (max-width: 768px) {
+    // ... existing code ...
 }

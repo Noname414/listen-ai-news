@@ -1,18 +1,117 @@
+// 全域變數
+let allArticles = [];
+let currentPage = 1;
+const articlesPerPage = 30;
+
 // 讀取 JSONL 檔案
 async function loadArticles() {
   try {
     const response = await fetch("news.jsonl");
     const text = await response.text();
     // 將 JSONL 文字分割成行並解析每一行，直接反轉順序
-    return text
+    allArticles = text
       .trim()
       .split("\n")
       .map((line) => JSON.parse(line))
       .reverse(); // 直接反轉陣列順序，最新的文章會在最前面
+
+    return getArticlesForPage(currentPage);
   } catch (error) {
     console.error("載入文章失敗:", error);
     return [];
   }
+}
+
+// 獲取指定頁碼的文章
+function getArticlesForPage(page) {
+  const startIndex = (page - 1) * articlesPerPage;
+  const endIndex = startIndex + articlesPerPage;
+  return allArticles.slice(startIndex, endIndex);
+}
+
+// 更新分頁控制項
+function updatePagination() {
+  const totalPages = Math.ceil(allArticles.length / articlesPerPage);
+  const paginationContainer = document.getElementById("pagination");
+  let paginationHTML = "";
+
+  // 上一頁按鈕
+  paginationHTML += `
+    <button class="page-btn" onclick="changePage(${currentPage - 1})" ${
+    currentPage === 1 ? "disabled" : ""
+  }>
+      上一頁
+    </button>
+  `;
+
+  // 頁碼按鈕
+  for (
+    let i = Math.max(1, currentPage - 2);
+    i <= Math.min(totalPages, currentPage + 2);
+    i++
+  ) {
+    paginationHTML += `
+      <button class="page-btn ${
+        i === currentPage ? "active" : ""
+      }" onclick="changePage(${i})">
+        ${i}
+      </button>
+    `;
+  }
+
+  // 下一頁按鈕
+  paginationHTML += `
+    <button class="page-btn" onclick="changePage(${currentPage + 1})" ${
+    currentPage === totalPages ? "disabled" : ""
+  }>
+      下一頁
+    </button>
+  `;
+
+  paginationContainer.innerHTML = paginationHTML;
+}
+
+// 切換頁面
+async function changePage(page) {
+  if (page < 1 || page > Math.ceil(allArticles.length / articlesPerPage)) {
+    return;
+  }
+
+  currentPage = page;
+  const articles = getArticlesForPage(page);
+
+  // 更新文章列表
+  const container = document.getElementById("articles-container");
+  container.innerHTML = articles.map(createArticleHTML).join("");
+
+  // 更新分頁控制項
+  updatePagination();
+
+  // 更新音訊播放器
+  const ap = new APlayer({
+    container: document.getElementById("aplayer"),
+    audio: createAudioList(articles),
+    theme: "#6366f1",
+    lrcType: 0,
+    listFolded: false,
+    listMaxHeight: 200,
+    order: "list",
+    controls: ["prev", "play", "next", "progress", "volume", "list"],
+  });
+
+  // 重新渲染 MathJax
+  setTimeout(() => {
+    try {
+      if (window.MathJax) {
+        window.MathJax.typeset();
+      }
+    } catch (e) {
+      console.error("MathJax 渲染錯誤:", e);
+    }
+  }, 500);
+
+  // 滾動到頁面頂部
+  window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
 // 建立音訊播放列表
@@ -111,6 +210,9 @@ async function initializePage() {
   // 顯示文章
   const container = document.getElementById("articles-container");
   container.innerHTML = articles.map(createArticleHTML).join("");
+
+  // 更新分頁控制項
+  updatePagination();
 
   // 播放速度控制
   const defaultSpeed = 1.25;
