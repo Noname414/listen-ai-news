@@ -58,22 +58,52 @@ def fetch_ai_papers(query, max_results=50):
     save_processed_ids(processed_ids)
     return papers
 
-# === 使用 Gemini 摘要為繁體中文 ===
+# === 使用 Gemini 分別翻譯標題和摘要為繁體中文 ===
 def summarize_to_chinese(title, summary):
-    prompt = (
-        f"請將以下arXiv論文標題與摘要翻譯成繁體中文，"
-        f"並將摘要濃縮成適合收聽且簡明扼要的中文摘要。\n"
-        f"英文標題：{title}\n"
-        f"英文摘要：{summary}\n"
-        f"請用JSON格式回覆，例如：{{\"title_zh\": \"...\", \"summary_zh\": \"...\"}}"
-    )
-    response = model.generate_content(prompt)
-    text = response.text.strip()
-    # 移除可能的 markdown 程式碼區塊標記
-    text = re.sub(r"^```json|^```|```$", "", text, flags=re.MULTILINE).strip()
-    # 解析 JSON 回應
-    result = json.loads(text)
-    return result
+    # 分別翻譯標題
+    try:
+        title_prompt = (
+            f"你是一個專業的學術翻譯系統。請將以下論文標題翻譯成中文，必須保持學術性和易讀性。\n"
+            f"規則：\n"
+            f"1. 直接輸出中文結果，不要加入任何額外文字\n"
+            f"2. 不要出現「翻譯」、「中文翻譯」等字眼\n"
+            f"3. 不要使用引號或其他標點符號包裹翻譯結果\n\n"
+            f"標題：{title}\n"
+        )
+        title_response = model.generate_content(title_prompt)
+        title_zh = title_response.text.strip()
+        # 移除可能的引號和多餘的標點符號
+        title_zh = re.sub(r'^["「]|["」]$', '', title_zh).strip()
+        print(f"標題翻譯成功: {title_zh[:30]}...")
+    except Exception as e:
+        print(f"標題翻譯錯誤: {str(e)}")
+        title_zh = f"[翻譯] {title}"
+    
+    # 分別翻譯並摘要內容
+    try:
+        summary_prompt = (
+            f"你是一個專業的學術翻譯系統。請將以下論文摘要翻譯成中文並濃縮為簡明扼要的版本。\n"
+            f"規則：\n"
+            f"1. 直接輸出中文結果，不要加入任何額外文字\n"
+            f"2. 不要出現「翻譯」、「中文翻譯」等字眼\n"
+            f"3. 不要使用引號或其他標點符號包裹翻譯結果\n"
+            f"4. 保持學術性但使其適合閱讀和收聽\n\n"
+            f"摘要：{summary}\n"
+        )
+        summary_response = model.generate_content(summary_prompt)
+        summary_zh = summary_response.text.strip()
+        # 移除可能的引號和多餘的標點符號
+        summary_zh = re.sub(r'^["「]|["」]$', '', summary_zh).strip()
+        print(f"摘要翻譯成功: {summary_zh[:30]}...")
+    except Exception as e:
+        print(f"摘要翻譯錯誤: {str(e)}")
+        summary_zh = f"[摘要] 無法正確翻譯此摘要，可能包含特殊符號或格式。原始摘要: {summary[:100]}..."
+    
+    # 返回結果
+    return {
+        "title_zh": title_zh,
+        "summary_zh": summary_zh
+    }
 
 # === 將摘要轉成語音檔 ===
 def save_audio(text, filename):

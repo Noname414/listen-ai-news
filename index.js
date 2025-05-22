@@ -33,9 +33,40 @@ function createAudioList(articles) {
 
 // 建立文章 HTML
 function createArticleHTML(article) {
-  const authors = Array.isArray(article.authors)
-    ? article.authors.join("、")
-    : article.authors;
+  // 處理作者顯示，如果超過 3 位則折疊
+  let authorsDisplay = "";
+  if (Array.isArray(article.authors)) {
+    if (article.authors.length > 3) {
+      // 顯示前 3 位作者，其餘折疊
+      const visibleAuthors = article.authors.slice(0, 3).join("、");
+      const allAuthors = article.authors.join("、");
+      authorsDisplay = `
+        <span class="authors-container">
+          <span class="collapsed-view">
+            <span class="visible-authors">${visibleAuthors}</span>
+            <span class="more-authors-toggle" onclick="toggleAuthors(this)">等 ${
+              article.authors.length - 3
+            } 位作者</span>
+          </span>
+          <span class="expanded-view" style="display:none;">
+            ${allAuthors}
+            <span class="more-authors-toggle" onclick="toggleAuthors(this)">收起</span>
+          </span>
+        </span>
+      `;
+    } else {
+      authorsDisplay = article.authors.join("、");
+    }
+  } else {
+    authorsDisplay = article.authors;
+  }
+
+  // 處理標題和摘要，確保 LaTeX 公式正確顯示
+  const title = article.title;
+  const title_zh = article.title_zh;
+  const summary = article.summary;
+  const summary_zh = article.summary_zh;
+
   const topic = article.query
     ? `<span class="topic">${article.query}</span>`
     : "";
@@ -43,19 +74,19 @@ function createArticleHTML(article) {
         <div class="article" data-audio-id="${article.id}">
             ${topic ? `<div class="topic-row">${topic}</div>` : ""}
             <div class="title">
-                <a class="title-original" href="${
+                <a class="title-original tex2jax_process" href="${
                   article.url
-                }" target="_blank" style="display:none;">${article.title}</a>
-                <a class="title-translation" href="${
+                }" target="_blank" style="display:none;">${title}</a>
+                <a class="title-translation tex2jax_process" href="${
                   article.url
-                }" target="_blank">${article.title_zh}</a>
+                }" target="_blank">${title_zh}</a>
             </div>
-            <div class="meta">${authors} ｜ ${article.published_date}</div>
+            <div class="meta">${authorsDisplay} ｜ ${
+    article.published_date
+  }</div>
             <div class="abstract">
-                <span class="abstract-original" style="display:none;">${
-                  article.summary
-                }</span>
-                <span class="abstract-translation">${article.summary_zh}</span>
+                <span class="abstract-original tex2jax_process" style="display:none;">${summary}</span>
+                <span class="abstract-translation tex2jax_process">${summary_zh}</span>
             </div>
         </div>
     `;
@@ -142,6 +173,17 @@ async function initializePage() {
   // 監聽播放和切換曲目事件
   ap.on("play", updateCurrentArticle);
   ap.on("listswitch", updateCurrentArticle);
+
+  // 簡化的 MathJax 渲染，避免過度複雜的 DOM 監聽
+  setTimeout(() => {
+    try {
+      if (window.MathJax) {
+        window.MathJax.typeset();
+      }
+    } catch (e) {
+      console.error("MathJax 渲染錯誤:", e);
+    }
+  }, 1000);
 }
 
 // 切換中英文顯示
@@ -162,6 +204,32 @@ function toggleAll() {
     .querySelectorAll(".abstract-translation")
     .forEach((e) => (e.style.display = showingTranslation ? "" : "none"));
   btn.textContent = showingTranslation ? "顯示原文" : "顯示翻譯";
+
+  // 切換語言後簡單重新渲染 MathJax
+  setTimeout(() => {
+    try {
+      if (window.MathJax) {
+        window.MathJax.typeset();
+      }
+    } catch (e) {
+      console.error("MathJax 渲染錯誤:", e);
+    }
+  }, 500);
+}
+
+// 切換作者顯示
+function toggleAuthors(element) {
+  const authorsContainer = element.closest(".authors-container");
+  const collapsedView = authorsContainer.querySelector(".collapsed-view");
+  const expandedView = authorsContainer.querySelector(".expanded-view");
+
+  if (collapsedView.style.display !== "none") {
+    collapsedView.style.display = "none";
+    expandedView.style.display = "inline";
+  } else {
+    collapsedView.style.display = "inline";
+    expandedView.style.display = "none";
+  }
 }
 
 // 當頁面載入完成時初始化

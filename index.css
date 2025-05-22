@@ -146,6 +146,85 @@ body {
     border-radius: 50%;
 }
 
+/* 作者折疊相關樣式 */
+.authors-container {
+    display: inline;
+}
+
+.collapsed-view,
+.expanded-view {
+    display: inline;
+}
+
+.more-authors-toggle {
+    color: #4f46e5;
+    cursor: pointer;
+    margin-left: 0.5em;
+    font-size: 0.9em;
+    padding: 0.2em 0.5em;
+    border-radius: 4px;
+    background-color: #f1f5f9;
+    transition: var(--transition);
+    display: inline-block;
+}
+
+.more-authors-toggle:hover {
+    background-color: #e2e8f0;
+    color: #4338ca;
+}
+
+.expanded-view {
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+/* LaTeX 公式樣式 */
+.mjx-chtml {
+    display: inline-block;
+    line-height: 0;
+    text-indent: 0;
+    text-align: left;
+    text-transform: none;
+    font-style: normal;
+    font-weight: normal;
+    font-size: 100%;
+    font-size-adjust: none;
+    letter-spacing: normal;
+    word-wrap: normal;
+    word-spacing: normal;
+    white-space: nowrap;
+    float: none;
+    direction: ltr;
+    max-width: none;
+    max-height: none;
+    min-width: 0;
+    min-height: 0;
+    border: 0;
+    margin: 0;
+    padding: 1px 0;
+}
+
+.abstract-translation .mjx-chtml,
+.abstract-original .mjx-chtml {
+    font-size: 110%;
+    margin: 0 0.15em;
+}
+
+.title-translation .mjx-chtml,
+.title-original .mjx-chtml {
+    font-size: 120%;
+    margin: 0 0.2em;
+}
+
 .topic {
     display: inline-block;
     background: linear-gradient(90deg, #34d399 0%, #059669 100%);
