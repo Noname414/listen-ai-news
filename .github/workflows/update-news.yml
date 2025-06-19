@@ -32,12 +32,21 @@ jobs:
         run: |
           python news_update.py
 
+      - name: Output diagnostic files
+        run: |
+          cat news.jsonl || echo "news.jsonl not found or is empty"
+          cat processed_ids.txt || echo "processed_ids.txt not found or is empty"
+
       - name: Commit and push if changed
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add -A
           git diff --quiet && git diff --staged --quiet || (git commit -m "自動更新：新增最新 AI 文章" && git push)
+
+      - name: Verify news.jsonl content
+        run: |
+          test -s news.jsonl || (echo "Error: news.jsonl is empty or does not exist. Skipping deployment." && exit 1)
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
